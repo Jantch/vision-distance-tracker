@@ -1,4 +1,3 @@
-from pathlib import Path
 import time as t
 
 
@@ -47,7 +46,7 @@ class DistanceCalculator:
     def should_calculate(self) -> bool:
         return t.time() - self.last_update_time >= self.update_interval
 
-def calibration(dist_calc, eye_dist_pix):
+def dis_t_calibration(dist_calc, eye_dist_pix):
     curr_dist = float(input("Enter your current distance from the screen: "))
     while curr_dist < 0 or not isinstance(curr_dist, (float, int)):
         print("Please enter a valid distance (float or int, positive value).\n")

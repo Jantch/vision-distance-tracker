@@ -2,9 +2,10 @@ import cv2
 import mediapipe as mp
 from pathlib import Path
 
-from distance_calculation import DistanceCalculator, calibration, save_calibration
+from distance_calculation import DistanceCalculator, dis_t_calibration, save_calibration
 from head_rot_comp import FaceRotComp
 from head_pose_tracker import HeadPoseTracker
+from posture_tracker import PostureTracker, pos_t_calibration
 
 # MediaPipe initialization
 mp_face_detection = mp.solutions.face_detection
@@ -24,6 +25,7 @@ else:
 
 face_rot_comp = FaceRotComp()
 head_pose_tracker = HeadPoseTracker()
+post_truck = PostureTracker()
 
 # Initialize the Face Detection model
 with mp_face_detection.FaceDetection(
@@ -66,17 +68,31 @@ with mp_face_detection.FaceDetection(
                 # Formula: sqrt((x2-x1)^2 + (y2-y1)^2)
                 eye_dist_px = ((re_x - le_x) ** 2 + (re_y - le_y) ** 2) ** 0.5
                 if not dist_calc.get_status():
-                    cv2.putText(image, f"press c to start calibration",
+                    cv2.putText(image, f"press d to start dist. calibration",
                             (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
                     key = cv2.waitKey(1) & 0xFF
-                    if key == ord('c'):
-                        calibration(dist_calc, eye_dist_px)
+                    if key == ord('d'):
+                        dis_t_calibration(dist_calc, eye_dist_px)
                         save_calibration(config_file, dist_calc.get_constant())
-                        
+
+                if not post_truck.get_status():
+                    cv2.putText(image, f"press p to start post. calibration",
+                                (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+
+                    key = cv2.waitKey(1) & 0xFF
+                    if key == ord('p'):
+                        pos_t_calibration(post_truck, re_y, le_y)
+
+                if post_truck.should_calculate():
+                    posture = post_truck.check_pos(re_y, le_y)
+                    if post_truck.if_bad():
+                        cv2.putText(image, f"Please sit up straight",
+                                    (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+
                 if head_pose_tracker.should_calculate():
                     angle = head_pose_tracker.calculate_angle(re_x, re_y, le_x, le_y)
-                cv2.putText(image, f"{int(angle)}",
+                cv2.putText(image, f"Your head angle: {int(angle)}",
                             (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
                 if dist_calc.get_status():
