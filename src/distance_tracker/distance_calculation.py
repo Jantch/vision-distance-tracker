@@ -3,12 +3,14 @@ import time as t
 
 
 class DistanceCalculator:
-    def __init__(self, constant = None, status = False, interval : float = 0.2):
+    def __init__(self, constant = None, status = False, interval : float = 0.2,
+                 alpha = 0.8):
         self.constant = constant
         self.if_calibrated = status
         self.last_dist = 0
         self.last_update_time = 0 # [s]
         self.update_interval = interval #[s]
+        self.alpha = alpha
 
     def dist_calc_calibration(self, eye_dist_pix : float, curr_dist : float | int):
         self.constant = (eye_dist_pix * curr_dist)
@@ -20,8 +22,13 @@ class DistanceCalculator:
     def get_dist(self, eye_dist_pix : float) -> float:
         try:
             dist = self.constant / eye_dist_pix
-            self.last_dist = dist
-            return dist
+            if self.last_dist == 0:
+                self.last_dist = dist
+                return dist
+            else:
+                dist = self.alpha * dist + (1-self.alpha) * self.last_dist
+                self.last_dist = dist
+                return dist
         except ZeroDivisionError:
             return self.last_dist
 

@@ -1,9 +1,9 @@
 import numpy as np
 
 class FaceRotComp:
-    def __init__(self):
+    def __init__(self, alpha=0.7):
         self.smooth_correction = 1
-        self.alpha = 0.7
+        self.alpha = alpha
 
     def calculate_correction(self, rex, lex, nosex, eyedist):
         l1 = np.abs(nosex - rex)
