@@ -1,7 +1,8 @@
 import cv2
 import mediapipe as mp
+from pathlib import Path
 
-
+from distance_calculation import DistanceCalculator, calibration, save_calibration
 
 # MediaPipe initialization
 mp_face_detection = mp.solutions.face_detection
@@ -9,7 +10,15 @@ mp_drawing = mp.solutions.drawing_utils
 
 cap = cv2.VideoCapture(0)
 
+config_file = Path("data_files/calibration_data.txt")
 
+if config_file.exists():
+    str_const = config_file.read_text()
+    if str_const != "":
+        const = float(str_const)
+        dist_calc = DistanceCalculator(const, True)
+else:
+    dist_calc = DistanceCalculator()
 
 
 # Initialize the Face Detection model
@@ -52,7 +61,22 @@ with mp_face_detection.FaceDetection(
                 # Calculate Euclidean distance in pixels
                 # Formula: sqrt((x2-x1)^2 + (y2-y1)^2)
                 eye_dist_px = ((re_x - le_x) ** 2 + (re_y - le_y) ** 2) ** 0.5
+                if not dist_calc.get_status():
+                    cv2.putText(image, f"press c to start calibration",
+                            (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
+                    key = cv2.waitKey(1) & 0xFF
+                    if key == ord('c'):
+                        calibration(dist_calc, eye_dist_px)
+                        save_calibration(config_file, dist_calc.get_constant())
+
+                if dist_calc.get_status():
+                    if dist_calc.should_calculate():
+                        dist_calc.time_update()
+
+                        curr_dist_raw = dist_calc.get_dist(eye_dist_px)
+                    cv2.putText(image, f"{int(curr_dist_raw)} cm",
+                                (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
                 # 5. Draw visual indicators for eyes
                 cv2.circle(image, (le_x, le_y), 5, (255, 0, 0), cv2.FILLED)
