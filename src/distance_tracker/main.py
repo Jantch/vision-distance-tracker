@@ -4,6 +4,7 @@ from pathlib import Path
 
 from distance_calculation import DistanceCalculator, calibration, save_calibration
 from head_rot_comp import FaceRotComp
+from head_pose_tracker import HeadPoseTracker
 
 # MediaPipe initialization
 mp_face_detection = mp.solutions.face_detection
@@ -22,6 +23,7 @@ else:
     dist_calc = DistanceCalculator()
 
 face_rot_comp = FaceRotComp()
+head_pose_tracker = HeadPoseTracker()
 
 # Initialize the Face Detection model
 with mp_face_detection.FaceDetection(
@@ -71,6 +73,11 @@ with mp_face_detection.FaceDetection(
                     if key == ord('c'):
                         calibration(dist_calc, eye_dist_px)
                         save_calibration(config_file, dist_calc.get_constant())
+                        
+                if head_pose_tracker.should_calculate():
+                    angle = head_pose_tracker.calculate_angle(re_x, re_y, le_x, le_y)
+                cv2.putText(image, f"{int(angle)}",
+                            (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
                 if dist_calc.get_status():
                     if dist_calc.should_calculate():
