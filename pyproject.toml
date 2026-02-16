@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vision-distance-tracker"
+version = "0.1.0"
+description = "Real-time monitor distance tracker with perspective compensation."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Jantch" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+    "opencv-python",
+    "mediapipe==0.10.11",
+    "numpy",
+]
+
+[project.scripts]
+vision-tracker = "distance_tracker.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
