@@ -3,6 +3,7 @@ import mediapipe as mp
 from pathlib import Path
 
 from distance_calculation import DistanceCalculator, calibration, save_calibration
+from head_rot_comp import FaceRotComp
 
 # MediaPipe initialization
 mp_face_detection = mp.solutions.face_detection
@@ -20,6 +21,7 @@ if config_file.exists():
 else:
     dist_calc = DistanceCalculator()
 
+face_rot_comp = FaceRotComp()
 
 # Initialize the Face Detection model
 with mp_face_detection.FaceDetection(
@@ -73,9 +75,12 @@ with mp_face_detection.FaceDetection(
                 if dist_calc.get_status():
                     if dist_calc.should_calculate():
                         dist_calc.time_update()
+                        face_rot_comp.calculate_correction(re_x, le_x, nose_x, eye_dist_px)
+                        eye_dist_px_corr = eye_dist_px * face_rot_comp.get_correction()
 
+                        curr_dist = dist_calc.get_dist(eye_dist_px_corr)
                         curr_dist_raw = dist_calc.get_dist(eye_dist_px)
-                    cv2.putText(image, f"{int(curr_dist_raw)} cm",
+                    cv2.putText(image, f"{int(curr_dist)} not corr {int(curr_dist_raw)} cm",
                                 (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
                 # 5. Draw visual indicators for eyes
