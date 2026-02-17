@@ -82,13 +82,7 @@ with mp_face_detection.FaceDetection(
 
                     key = cv2.waitKey(1) & 0xFF
                     if key == ord('p'):
-                        pos_t_calibration(post_truck, re_y, le_y)
-
-                if post_truck.should_calculate():
-                    posture = post_truck.check_pos(re_y, le_y)
-                    if post_truck.if_bad():
-                        cv2.putText(image, f"Please sit up straight",
-                                    (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+                        pos_t_calibration(post_truck, re_y, le_y, curr_dist)
 
                 if head_pose_tracker.should_calculate():
                     angle = head_pose_tracker.calculate_angle(re_x, re_y, le_x, le_y)
@@ -105,6 +99,12 @@ with mp_face_detection.FaceDetection(
                         curr_dist_raw = dist_calc.get_dist(eye_dist_px)
                     cv2.putText(image, f"{int(curr_dist)} not corr {int(curr_dist_raw)} cm",
                                 (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+
+                if post_truck.should_calculate():
+                    posture = post_truck.check_pos(re_y, le_y, curr_dist)
+                    if post_truck.if_bad():
+                        cv2.putText(image, f"Please sit up straight",
+                                    (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
                 # 5. Draw visual indicators for eyes
                 cv2.circle(image, (le_x, le_y), 5, (255, 0, 0), cv2.FILLED)
