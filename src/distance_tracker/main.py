@@ -1,6 +1,8 @@
 import cv2
 import mediapipe as mp
 from pathlib import Path
+import datetime
+
 
 from distance_calculation import DistanceCalculator, dis_t_calibration, save_calibration
 from head_rot_comp import FaceRotComp
@@ -45,8 +47,16 @@ with mp_face_detection.FaceDetection(
         # Convert back to BGR for OpenCV visualization
         image = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
 
+        date = datetime.datetime.now().strftime("%H:%M")
+        cv2.putText(image, f"{date}",
+                    (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
 
         if results.detections:
+            x_disp_shift = 30
+            y_disp_shift = 25
+            red = (0, 0, 255)
+            green = (0, 255, 0)
+            yellow = (0, 255, 255)
             for detection in results.detections:
                 # Draw standard detection markers
                 mp_drawing.draw_detection(image, detection)
@@ -55,6 +65,17 @@ with mp_face_detection.FaceDetection(
                 keypoints = detection.location_data.relative_keypoints
                 left_eye = keypoints[0]
                 right_eye = keypoints[1]
+                bbox = detection.location_data.relative_bounding_box
+
+                # Get coordinates of the box
+                x_min = int(bbox.xmin * iw)
+                y_min = int(bbox.ymin * ih)
+                bbox_width = int(bbox.width * iw)
+                bbox_height = int(bbox.height * ih)
+
+                # Coordinates of the lower, right point
+                x_max = x_min + bbox_width
+                y_max = y_min + bbox_height
 
                 # Get keypoints for nose
                 nose = keypoints[2]
@@ -86,8 +107,14 @@ with mp_face_detection.FaceDetection(
 
                 if head_pose_tracker.should_calculate():
                     angle = head_pose_tracker.calculate_angle(re_x, re_y, le_x, le_y)
-                cv2.putText(image, f"Your head angle: {int(angle)}",
-                            (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+                    if -2 <= angle <= 2 :
+                        a_disp_color = green
+                    elif -4 <= angle <= 4 :
+                        a_disp_color = yellow
+                    else:
+                        a_disp_color = red
+                cv2.putText(image, f"Head angle: {int(angle)}",
+                            (x_min, y_max+2*y_disp_shift), cv2.FONT_HERSHEY_SIMPLEX, 0.8, a_disp_color, 1)
 
                 if dist_calc.get_status():
                     if dist_calc.should_calculate():
@@ -97,8 +124,14 @@ with mp_face_detection.FaceDetection(
 
                         curr_dist = dist_calc.get_dist(eye_dist_px_corr)
                         curr_dist_raw = dist_calc.get_dist(eye_dist_px)
-                    cv2.putText(image, f"{int(curr_dist)} not corr {int(curr_dist_raw)} cm",
-                                (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+                        if curr_dist >= 60:
+                            d_disp_color = green
+                        elif 50 <= curr_dist < 60:
+                            d_disp_color = yellow
+                        else:
+                            d_disp_color = red
+                    cv2.putText(image, f"Distance: {int(curr_dist)}[cm]",
+                                (x_min, y_max+y_disp_shift), cv2.FONT_HERSHEY_SIMPLEX, 0.8, d_disp_color, 1)
 
                 if post_truck.should_calculate():
                     posture = post_truck.check_pos(re_y, le_y, curr_dist)
