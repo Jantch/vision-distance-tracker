@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 from pathlib import Path
 import datetime
+from camera_stream import CameraStream
 
 
 from distance_calculation import DistanceCalculator, dis_t_calibration, save_calibration
@@ -32,7 +33,9 @@ post_truck = PostureTracker()
 # Initialize the Face Detection model
 with mp_face_detection.FaceDetection(
         model_selection=0, min_detection_confidence=0.5) as face_detection:
-    while cap.isOpened():
+    
+    cap = CameraStream(0).start()
+    while True:
         success, image = cap.read()
         if not success:
             continue
