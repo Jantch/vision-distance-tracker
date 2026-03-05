@@ -8,6 +8,7 @@ from distance_calculation import DistanceCalculator, dis_t_calibration, save_cal
 from head_rot_comp import FaceRotComp
 from head_pose_tracker import HeadPoseTracker
 from posture_tracker import PostureTracker, pos_t_calibration
+from fps_counter import FPSCounter
 
 # MediaPipe initialization
 mp_face_detection = mp.solutions.face_detection
@@ -28,6 +29,7 @@ else:
 face_rot_comp = FaceRotComp()
 head_pose_tracker = HeadPoseTracker()
 post_truck = PostureTracker()
+fps_counter = FPSCounter()
 
 # Initialize the Face Detection model
 with mp_face_detection.FaceDetection(
@@ -50,6 +52,10 @@ with mp_face_detection.FaceDetection(
         date = datetime.datetime.now().strftime("%H:%M")
         cv2.putText(image, f"{date}",
                     (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+
+        fps = fps_counter.get_fps()
+        cv2.putText(image, f"FPS: {fps}", (20, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 1)
 
         if results.detections:
             x_disp_shift = 30
